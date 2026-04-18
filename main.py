@@ -16,42 +16,26 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 
-# #Add
-# @tree.command(
-#         name = "add_scheduled_ping",
-#         description = "Add a time to ping everyone in format: <Mon/Tues/Wed/Thu/Fri/Sat/Sun>, <Time of day AM/PM>, <role>"
-# )
-# async def add_to_schedule(interaction: discord.Interaction, message: str):
-#     message.strip("")
-#     info = message.split(",")
-#     day = info[0]
-#     time = info[1]
-#     role = info[2]
-#     print(day + " " + time + " " + role)
+#Add
+@tree.command(
+        name = "add_scheduled_ping",
+        description = "Add a time to ping everyone in format: <Mon/Tues/Wed/Thu/Fri/Sat/Sun>, <Time of day AM/PM>, <role>"
+)
+async def add_to_schedule(interaction: discord.Interaction, message: str):
+    message.strip("")
+    info = message.split(",")
+    day = info[0]
+    time = info[1]
+    role = info[2]
+    print(day + " " + time + " " + role)
 
 
-# ##MAIN##
-# @client.event
-# async def on_ready():
-#     print(f'We have logged in as {client.user}')
-#     await tree.sync()
-#     # run.start()
-
-# This example requires the 'message_content' intent.
-
+##MAIN##
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
-
-
+    await tree.sync()
+    # run.start()
 
 
 f = open("token.txt", "r")
