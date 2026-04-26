@@ -31,25 +31,30 @@ def parse_day(day: str):
 #-------------------------------------------------------
 
 def parse_time(time: str):
-    time.lower();
-    time.strip(" ")
+    time = time.lower();
+    time = time.strip()
+
     #get if its am or pm 
-    afternoon = False
-    if (time.find("am")):
+    afternoon = True #bias towards the afternoon
+    if (time.find("am") >= 0):
         afternoon = False
-    elif (time.find("pm")):
-        afternoon = True
-    else:
-        return -1, -1
-    time.rstrip("apm")
+    time = time.rstrip("apm")
     
     #if contains a : then separate hours from minutes
     info = time.split(":", 1)
-    hours = info[0]
+    hours = int(info[0])
     minutes = 0
     if (len(info) == 2):
-        minutes = info[1]
-    print(hours + " " + minutes)
+        minutes = int(info[1])
+    if (hours > 12 or minutes > 59):
+        return -1,-1
+    
+    #put into military time
+    if not afternoon and hours == 12:
+        hours = 0
+    if (afternoon and hours != 12):
+        hours = hours + 12
+
     return hours, minutes
 
     
@@ -63,6 +68,9 @@ def parse_time(time: str):
 async def add_to_schedule(interaction: discord.Interaction, message: str) -> None:
     message.strip("")
     info = message.split(",")
+    if (len(info) < 4):
+        await interaction.response.send_message("invalid input")
+        return
 
     #parse day
     day = info[0] #TODO condense later
@@ -83,7 +91,7 @@ async def add_to_schedule(interaction: discord.Interaction, message: str) -> Non
 
     mess = info[3]
     
-    schedule.append(info)
+    # schedule.append(info)
     
     await interaction.response.send_message("valid, thank you")
     print(schedule)
