@@ -65,45 +65,35 @@ def parse_time(time: str):
     name = "add_scheduled_ping",
     description = "format: <Mon/Tues/Wed/Thu/Fri/Sat/Sun>, <Time of day AM/PM>, <role>, <message>"
 )
-async def add_to_schedule(interaction: discord.Interaction, message: str) -> None:
+@app_commands.describe(
+    day="day of the week",
+    time="time(default is afternoon)",
+    role="whos your victim",
+    message="message"
+)
+async def add_to_schedule(
+    interaction: discord.Interaction, 
+    day: str,
+    time: str,
+    role: discord.Role,
+    message: str
+) -> None:
     message.strip("")
-    info = message.split(",")
-    if (len(info) < 4):
-        await interaction.response.send_message("invalid input")
-        return
 
     #parse day
-    day = info[0] #TODO condense later
     day = parse_day(day)
     if (day == 0):
         await interaction.response.send_message("invalid input")
         return
-    else:
-        info[0] = day
     
     #parse time
-    time = parse_time(info[1])
+    time = parse_time(time)
     if (time[0] == -1):
         await interaction.response.send_message("invalid input")
         return
     
-    role = info[2]
-
-    mess = info[3]
-    
-    # schedule.append(info)
-    
-    await interaction.response.send_message("valid, thank you")
-    print(schedule)
-
-
-# #Print schedule
-# @tree.command(
-#     name = "print_schedule",
-#     description = "whats the schedule?"
-# )
-# async def add_to_schedule(interaction: discord.Interaction) -> None:
-#     await interaction.response.send_message("schedule")
+    await interaction.response.send_message("scheduled")
+    # await interaction.response.send_message(f"{role.mention} {message}")
 
 
 ##MAIN##
