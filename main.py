@@ -22,17 +22,19 @@ day_map = {"SUN":0, "MON":1, "TUE":2, "WED":3, "THU":4, "FRI":5, "SAT":6}
 
 #Parse the day string
 #Input: day as a str
-#Returns: day as a number or zero for invalid input
+#Returns: day as a number or -1 for invalid input
 def parse_day(day: str):
     day = day.upper()
     day = day[:3]
-    return day_map.get(day, 0)
+    return day_map.get(day, -1)
 
 #-------------------------------------------------------
 
+#Parse the time string
+#Input: time as a str
+#Returns: hours and minutes as miltary time or -1 for invalid input
 def parse_time(time: str):
-    time = time.lower();
-    time = time.strip()
+    time = time.lower().strip()
 
     #get if its am or pm 
     afternoon = True #bias towards the afternoon
@@ -59,7 +61,7 @@ def parse_time(time: str):
 
 #-------------------------------------------------------
 
-#604800 -> seconds in a week
+#86400 -> seconds in a day
 def time_to_seconds(day, hour, minute):
     day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
     return day_sec
@@ -100,7 +102,14 @@ async def add_to_schedule(
     
     day_time = time_to_seconds(day, time[0], time[1])
     
-    await interaction.response.send_message(day_time)
+    #add to schedule
+    event = {day_time: (role, message)}
+    schedule.append(event)
+    schedule.sort()
+
+    await interaction.response.send_message("scheduled") #sometimes does two @
+
+    print(schedule)
     # await interaction.response.send_message(f"{role.mention} {message}")
 
 
