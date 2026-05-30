@@ -15,7 +15,7 @@ tree = app_commands.CommandTree(client)
 #hoping to put it in a list because it shouldnt be that long for my server purposes. Can move to a file
 schedule = []
 
-day_map = {"SUN":1, "MON":2, "TUE": 3, "WED": 4, "THU": 5, "FRI": 6, "SAT": 7}
+day_map = {"SUN":0, "MON":1, "TUE":2, "WED":3, "THU":4, "FRI":5, "SAT":6}
 
 
 ########## HELPER FUNCTIONS ###########
@@ -57,7 +57,13 @@ def parse_time(time: str):
 
     return hours, minutes
 
-    
+#-------------------------------------------------------
+
+#604800 -> seconds in a week
+def time_to_seconds(day, hour, minute):
+    day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
+    return day_sec
+
 
 ######### DISCORD FUNCTIONS ###########
 #Add
@@ -82,17 +88,19 @@ async def add_to_schedule(
 
     #parse day
     day = parse_day(day)
-    if (day == 0):
-        await interaction.response.send_message("invalid input")
+    if (day == -1):
+        await interaction.response.send_message("invalid input day")
         return
     
     #parse time
     time = parse_time(time)
     if (time[0] == -1):
-        await interaction.response.send_message("invalid input")
+        await interaction.response.send_message("invalid input time")
         return
     
-    await interaction.response.send_message("scheduled")
+    day_time = time_to_seconds(day, time[0], time[1])
+    
+    await interaction.response.send_message(day_time)
     # await interaction.response.send_message(f"{role.mention} {message}")
 
 
