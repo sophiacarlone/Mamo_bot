@@ -13,7 +13,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 #hoping to put it in a list because it shouldnt be that long for my server purposes. Can move to a file
-schedule = []
+schedule = {}
 
 day_map = {"SUN":0, "MON":1, "TUE":2, "WED":3, "THU":4, "FRI":5, "SAT":6}
 
@@ -66,6 +66,8 @@ def time_to_seconds(day, hour, minute):
     day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
     return day_sec
 
+# def sort_schedule(schedule):
+#     for k, v in 
 
 ######### DISCORD FUNCTIONS ###########
 #Add
@@ -86,6 +88,7 @@ async def add_to_schedule(
     role: discord.Role,
     message: str
 ) -> None:
+    global schedule
     message.strip("")
 
     #parse day
@@ -103,9 +106,11 @@ async def add_to_schedule(
     day_time = time_to_seconds(day, time[0], time[1])
     
     #add to schedule
-    event = {day_time: (role, message)}
-    schedule.append(event)
-    schedule.sort()
+    schedule[day_time] = (role, message)
+    schedule = dict(sorted(schedule.items(), key = lambda item: item[0]))
+    # schedule.update({day_time: (role, message)})
+    # schedule = dict(sorted(schedule.items()))
+    # for k, v in sorted(schedule.items())
 
     await interaction.response.send_message("scheduled") #sometimes does two @
 
@@ -113,7 +118,10 @@ async def add_to_schedule(
     # await interaction.response.send_message(f"{role.mention} {message}")
 
 
-##MAIN##
+#-------------------------------------------------------
+
+
+################### MAIN ######################
 @client.event
 async def on_ready():
     print(f'We have logged in as {client.user}')
