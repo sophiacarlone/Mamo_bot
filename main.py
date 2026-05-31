@@ -1,6 +1,7 @@
 # HII DAVID WYATT - this is for you :)
 
 import time
+import asyncio
 import datetime
 from datetime import date
 import discord
@@ -12,10 +13,11 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-#hoping to put it in a list because it shouldnt be that long for my server purposes. Can move to a file
-schedule = {}
+day_map = {"MON":0, "TUE":1, "WED":2, "THU":3, "FRI":4, "SAT":5, "SUN":6}
 
-day_map = {"SUN":0, "MON":1, "TUE":2, "WED":3, "THU":4, "FRI":5, "SAT":6}
+######### GLOBALS ###########
+schedule = {} #schedule of events
+time_index = 0
 
 
 ########## HELPER FUNCTIONS ###########
@@ -66,8 +68,6 @@ def time_to_seconds(day, hour, minute):
     day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
     return day_sec
 
-# def sort_schedule(schedule):
-#     for k, v in 
 
 ######### DISCORD FUNCTIONS ###########
 #Add
@@ -108,17 +108,20 @@ async def add_to_schedule(
     #add to schedule
     schedule[day_time] = (role, message)
     schedule = dict(sorted(schedule.items(), key = lambda item: item[0]))
-    # schedule.update({day_time: (role, message)})
-    # schedule = dict(sorted(schedule.items()))
-    # for k, v in sorted(schedule.items())
 
     await interaction.response.send_message("scheduled") #sometimes does two @
 
     print(schedule)
     # await interaction.response.send_message(f"{role.mention} {message}")
 
-
 #-------------------------------------------------------
+
+async def pinger(interaction: discord.Interaction):
+    global schedule
+    while True:
+        now = datetime.datetime.now()
+        now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute) + now.second
+        # await interaction.response.send_message(f"{role.mention} {message}")
 
 
 ################### MAIN ######################
@@ -127,7 +130,6 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     await tree.sync()
     # run.start()
-
 
 f = open("token.txt", "r")
 token = f.readline().strip("\n");
