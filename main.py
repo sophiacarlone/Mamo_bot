@@ -6,6 +6,7 @@ import datetime
 from datetime import date
 import discord
 from discord import app_commands
+from discord.ext import tasks
 
 #setting up discord client
 intents = discord.Intents.default()
@@ -68,7 +69,18 @@ def time_to_seconds(day, hour, minute):
     day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
     return day_sec
 
+#-------------------------------------------------------
 
+def find_closest_event(now):
+    difference = 604800 #seconds in a week
+    closest = 0
+    for _, key in enumerate(schedule):
+        temp = key - now
+        if temp > 0 and temp < difference:
+            closest = key
+            difference = temp
+    return closest
+    
 ######### DISCORD FUNCTIONS ###########
 #Add
 @tree.command(
@@ -111,17 +123,17 @@ async def add_to_schedule(
 
     await interaction.response.send_message("scheduled") #sometimes does two @
 
-    print(schedule)
-    # await interaction.response.send_message(f"{role.mention} {message}")
-
 #-------------------------------------------------------
 
-async def pinger(interaction: discord.Interaction):
+@tasks.loop()
+async def pinger():
     global schedule
-    while True:
-        now = datetime.datetime.now()
-        now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute) + now.second
-        # await interaction.response.send_message(f"{role.mention} {message}")
+    now = datetime.datetime.now()
+    now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute) + now.second
+    next_event = find_closest_event(now_sec)
+    # print(next_event)
+    #need to have a dedicated channel (lobby) that is stored and will send the messages
+    # await interaction.response.send_message(f"{role.mention} {message}")
 
 
 ################### MAIN ######################
@@ -129,6 +141,7 @@ async def pinger(interaction: discord.Interaction):
 async def on_ready():
     print(f'We have logged in as {client.user}')
     await tree.sync()
+    pinger.start()
     # run.start()
 
 f = open("token.txt", "r")
