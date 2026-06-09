@@ -14,11 +14,12 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-day_map = {"MON":0, "TUE":1, "WED":2, "THU":3, "FRI":4, "SAT":5, "SUN":6}
 
 ######### GLOBALS ###########
 schedule = {} #schedule of events
 time_index = 0
+day_map = {"MON":0, "TUE":1, "WED":2, "THU":3, "FRI":4, "SAT":5, "SUN":6}
+CHANNEL = 1179068545297043537
 
 
 ########## HELPER FUNCTIONS ###########
@@ -79,8 +80,12 @@ def find_closest_event(now):
         if temp > 0 and temp < difference:
             closest = key
             difference = temp
+    #wrap around week
+    if(closest == 0):
+        closest = next(iter(schedule))
     return closest
     
+
 ######### DISCORD FUNCTIONS ###########
 #Add
 @tree.command(
@@ -125,15 +130,68 @@ async def add_to_schedule(
 
 #-------------------------------------------------------
 
+@tree.command(
+name = "delete_scheduled_ping",
+description = "format: <Mon/Tues/Wed/Thu/Fri/Sat/Sun>, <Time of day AM/PM>"
+)
+@app_commands.describe(
+    day="day of the week",
+    time="time(default is afternoon)",
+)
+async def delete_from_schedule(
+    interaction: discord.Interaction, 
+    day: str,
+    time: str
+) -> None:
+    
+    #parse day
+    day = parse_day(day)
+    if (day == -1):
+        await interaction.response.send_message("invalid input day")
+        return
+    
+    #parse time
+    time = parse_time(time)
+    if (time[0] == -1):
+        await interaction.response.send_message("invalid input time")
+        return
+    day_time = time_to_seconds(day, time[0], time[1])
+
+    #remove from schedule if its there
+    if(schedule.pop(day_time, -1) == -1):
+        await interaction.response.send_message("event not found") 
+    else:
+        await interaction.response.send_message("event removed") 
+
+#-------------------------------------------------------
+
 @tasks.loop()
 async def pinger():
+    channel = client.get_channel(CHANNEL)
     global schedule
+    if(len(schedule) == 0):
+        return
+    
+    #time now
     now = datetime.datetime.now()
     now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute) + now.second
+    
+    #time of next event
     next_event = find_closest_event(now_sec)
-    # print(next_event)
-    #need to have a dedicated channel (lobby) that is stored and will send the messages
-    # await interaction.response.send_message(f"{role.mention} {message}")
+    
+    #sleep till next event
+    if(now_sec > next_event): #wrapping around the week
+        seconds_diff = (604800 - now_sec)+next_event
+        # time.sleep(seconds_diff)
+        await asyncio.sleep(seconds_diff)
+    else:
+        # time.sleep(next_event-now_sec)
+        await asyncio.sleep(next_event-now_sec)
+    
+    #EVENT TIME!
+    role, message = schedule[next_event]
+    await channel.send(f"{role.mention} {message}")
+    await asyncio.sleep(59) #dont repeat yourself
 
 
 ################### MAIN ######################
@@ -142,7 +200,6 @@ async def on_ready():
     print(f'We have logged in as {client.user}')
     await tree.sync()
     pinger.start()
-    # run.start()
 
 f = open("token.txt", "r")
 token = f.readline().strip("\n");
