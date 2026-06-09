@@ -39,17 +39,19 @@ def parse_day(day: str):
 #Returns: hours and minutes as miltary time or -1 for invalid input
 def parse_time(time: str):
     time = time.lower().strip()
-
+    seconds = 0 #remove later
     #get if its am or pm 
     afternoon = True #bias towards the afternoon
-    if (time.find("am") >= 0):
+    if (time.find("a") >= 0):
         afternoon = False
-    time = time.rstrip("apm")
+    time = time.rstrip("apmAPM")
     
     #if contains a : then separate hours from minutes
-    info = time.split(":", 1)
+    info = time.split(":", -1)
     if(len(info) == 3):
-        return -1
+        seconds = int(info[2])
+        if seconds > 59 or seconds < 0:
+            seconds = 0
     hours = int(info[0])
     minutes = 0
     if (len(info) == 2):
@@ -63,14 +65,38 @@ def parse_time(time: str):
     if (afternoon and hours != 12):
         hours = hours + 12
 
-    return hours, minutes
+    return hours, minutes, seconds
 
 #-------------------------------------------------------
 
 #86400 -> seconds in a day
-def time_to_seconds(day, hour, minute):
-    day_sec = (day * 86400) + (hour * 3600) + (minute * 60)
+def time_to_seconds(day, hour, minute, seconds):
+    day_sec = (day * 86400) + (hour * 3600) + (minute * 60) + seconds
     return day_sec
+
+#-------------------------------------------------------
+
+def seconds_to_time(seconds_format):
+    #day
+    day = ""
+    d = int(seconds_format / 86400)
+    for key, val in day_map.items():
+        if val == d:
+            day = key
+            continue
+    seconds_format = seconds_format % 86400
+
+    #hour
+    hour = int(seconds_format / 3600)
+    seconds_format = seconds_format % 3600
+
+    #minute
+    minute = int(seconds_format / 60)
+
+    #second
+    second = seconds_format % 60
+
+    return day, hour, minute, second
 
 #-------------------------------------------------------
 
@@ -113,22 +139,22 @@ async def add_to_schedule(
     #parse day
     day = parse_day(day)
     if (day == -1):
-        await interaction.response.send_message("invalid input day")
+        await interaction.response.send_message("invalid input day " + message)
         return
     
     #parse time
     time = parse_time(time)
     if (time[0] == -1):
-        await interaction.response.send_message("invalid input time")
+        await interaction.response.send_message("invalid input time for event " + message)
         return
     
-    day_time = time_to_seconds(day, time[0], time[1])
+    day_time = time_to_seconds(day, time[0], time[1], time[2])
     
     #add to schedule
     schedule[day_time] = (role, message)
     schedule = dict(sorted(schedule.items(), key = lambda item: item[0]))
 
-    await interaction.response.send_message("scheduled") #sometimes does two @
+    await interaction.response.send_message("scheduled event " + message) #sometimes does two @
 
 #-------------------------------------------------------
 
@@ -157,7 +183,7 @@ async def delete_from_schedule(
     if (time[0] == -1):
         await interaction.response.send_message("invalid input time")
         return
-    day_time = time_to_seconds(day, time[0], time[1])
+    day_time = time_to_seconds(day, time[0], time[1], time[2])
 
     #remove from schedule if its there
     if(schedule.pop(day_time, -1) == -1):
@@ -165,6 +191,23 @@ async def delete_from_schedule(
     else:
         await interaction.response.send_message("event removed") 
 
+#-------------------------------------------------------
+
+@tree.command(
+name = "list_scheduled_pings"
+)
+async def list_schedule(
+    interaction: discord.Interaction, 
+) -> None:
+    if len(schedule) == 0:
+        await interaction.response.send_message("no scheduled events")
+        return
+    message = ""
+    for key, val in schedule.items():
+        day, hour, minute, second = seconds_to_time(key)
+        message += (day + ", " + str(hour) + ":" + str(minute) + " " + val[1] + "\r\n")
+    await interaction.response.send_message(message)
+    
 #-------------------------------------------------------
 
 @tasks.loop()
@@ -176,7 +219,7 @@ async def pinger():
     
     #time now
     now = datetime.datetime.now()
-    now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute) + now.second
+    now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute, now.second) 
     
     #time of next event
     next_event = find_closest_event(now_sec)
