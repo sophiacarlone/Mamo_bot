@@ -18,7 +18,7 @@ tree = app_commands.CommandTree(client)
 ######### GLOBALS ###########
 schedule = {} #schedule of events
 time_index = 0
-day_map = {"MON":0, "TUE":1, "WED":2, "THU":3, "FRI":4, "SAT":5, "SUN":6}
+day_map = {"MO":0, "TU":1, "WE":2, "TH":3, "FR":4, "SA":5, "SU":6}
 CHANNEL = 1179068545297043537
 
 
@@ -29,7 +29,7 @@ CHANNEL = 1179068545297043537
 #Returns: day as a number or -1 for invalid input
 def parse_day(day: str):
     day = day.upper()
-    day = day[:3]
+    day = day[:2]
     return day_map.get(day, -1)
 
 #-------------------------------------------------------
@@ -48,6 +48,8 @@ def parse_time(time: str):
     
     #if contains a : then separate hours from minutes
     info = time.split(":", 1)
+    if(len(info) == 3):
+        return -1
     hours = int(info[0])
     minutes = 0
     if (len(info) == 2):
@@ -132,11 +134,11 @@ async def add_to_schedule(
 
 @tree.command(
 name = "delete_scheduled_ping",
-description = "format: <Mon/Tues/Wed/Thu/Fri/Sat/Sun>, <Time of day AM/PM>"
+description = "format: <Mo/Tu/We/Th/Fr/Sa/Su>, <Time of day AM/PM>"
 )
 @app_commands.describe(
     day="day of the week",
-    time="time(default is afternoon)",
+    time="time(default is pm)",
 )
 async def delete_from_schedule(
     interaction: discord.Interaction, 
@@ -178,6 +180,9 @@ async def pinger():
     
     #time of next event
     next_event = find_closest_event(now_sec)
+
+    if(now_sec == next_event):
+        return #should have happened at the end of the last loop
     
     #sleep till next event
     if(now_sec > next_event): #wrapping around the week
@@ -191,7 +196,7 @@ async def pinger():
     #EVENT TIME!
     role, message = schedule[next_event]
     await channel.send(f"{role.mention} {message}")
-    await asyncio.sleep(59) #dont repeat yourself
+    # await asyncio.sleep(59) #dont repeat yourself
 
 
 ################### MAIN ######################
