@@ -151,27 +151,36 @@ async def add_to_schedule(
     day_time = time_to_seconds(day, time[0], time[1], time[2])
     
     #add to schedule
+    while(day_time in schedule):
+        day_time += 5 #event will be the second later
     schedule[day_time] = (role, message)
     schedule = dict(sorted(schedule.items(), key = lambda item: item[0]))
 
-    await interaction.response.send_message("scheduled event " + message) #sometimes does two @
+    try:
+        await interaction.response.send_message("scheduled event " + message) #sometimes does two @
+    except:
+        await interaction.response.send_message("you were late. You cant schedule for rn")
+
 
 #-------------------------------------------------------
 
 @tree.command(
 name = "delete_scheduled_ping",
-description = "format: <Mo/Tu/We/Th/Fr/Sa/Su>, <Time of day AM/PM>"
+description = "format: <Mo/Tu/We/Th/Fr/Sa/Su>, <Time of day AM/PM>, message(optional)"
 )
 @app_commands.describe(
     day="day of the week",
     time="time(default is pm)",
+    message="optional: only need for multiple same time events",
 )
 async def delete_from_schedule(
     interaction: discord.Interaction, 
     day: str,
-    time: str
+    time: str,
+    message: str | None
 ) -> None:
-    
+    global schedule
+
     #parse day
     day = parse_day(day)
     if (day == -1):
@@ -183,13 +192,24 @@ async def delete_from_schedule(
     if (time[0] == -1):
         await interaction.response.send_message("invalid input time")
         return
+    
     day_time = time_to_seconds(day, time[0], time[1], time[2])
 
     #remove from schedule if its there
-    if(schedule.pop(day_time, -1) == -1):
-        await interaction.response.send_message("event not found") 
+
+    if(message != None):
+        curr_length = len(schedule) #before snapshot
+        schedule = {key:val for key, val in schedule.items() if val[1] != message}
+        if(len(schedule) is not curr_length):
+            await interaction.response.send_message("event removed")
+        else:
+            await interaction.response.send_message("event not found")    
+
     else:
-        await interaction.response.send_message("event removed") 
+        if(schedule.pop(day_time, -1) == -1):
+            await interaction.response.send_message("event not found") 
+        else:
+            await interaction.response.send_message("event removed") 
 
 #-------------------------------------------------------
 
