@@ -243,29 +243,12 @@ async def pinger():
     
     # #time of next event
     next_event = find_closest_event(now_sec)
-    # print("event")
-    # print(seconds_to_time(next_event))
-    # print("now")
-    # print(seconds_to_time(now_sec))
 
     if(now_sec == next_event):
         role, message = schedule[next_event]
         await channel.send(f"{role.mention} {message}")
     
     await asyncio.sleep(1) #would turn to 60 later
-    # #sleep till next event
-    # if(now_sec > next_event): #wrapping around the week
-    #     seconds_diff = (604800 - now_sec)+next_event
-    #     # time.sleep(seconds_diff)
-    #     await asyncio.sleep(seconds_diff)
-    # else:
-    #     # time.sleep(next_event-now_sec)
-    #     await asyncio.sleep(next_event-now_sec)
-    
-    # #EVENT TIME!
-    # role, message = schedule[next_event]
-    # await channel.send(f"{role.mention} {message}")
-    # # await asyncio.sleep(59) #dont repeat yourself
 
 
 ################### MAIN ######################
