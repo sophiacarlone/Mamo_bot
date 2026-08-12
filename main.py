@@ -3,7 +3,7 @@
 import time
 import asyncio
 import datetime
-from datetime import date
+from datetime import datetime
 import discord
 from discord import app_commands
 from discord.ext import tasks
@@ -225,7 +225,9 @@ async def list_schedule(
     message = ""
     for key, val in schedule.items():
         day, hour, minute, second = seconds_to_time(key)
-        message += (day + ", " + str(hour) + ":" + str(minute) + " " + val[1] + "\r\n")
+        time_string = str(hour) + ":" + str(minute)
+        time_message = datetime.strptime(time_string, "%H:%M").strftime("%I:%M %p")
+        message += day + ", " + time_message + " " + val[1] + "\r\n"
     await interaction.response.send_message(message)
     
 #-------------------------------------------------------
@@ -238,7 +240,7 @@ async def pinger():
         return
     
     #time now
-    now = datetime.datetime.now()
+    now = datetime.now()
     now_sec = time_to_seconds(now.today().weekday(), now.hour, now.minute, now.second) 
     
     # #time of next event
