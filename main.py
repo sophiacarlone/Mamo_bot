@@ -19,7 +19,7 @@ tree = app_commands.CommandTree(client)
 schedule = {} #schedule of events
 time_index = 0
 day_map = {"MO":0, "TU":1, "WE":2, "TH":3, "FR":4, "SA":5, "SU":6}
-CHANNEL = 1179068545297043537
+CHANNEL = 0
 
 
 ########## HELPER FUNCTIONS ###########
@@ -256,6 +256,8 @@ async def pinger():
 ################### MAIN ######################
 @client.event
 async def on_ready():
+    f = open("channel.txt", "r")
+    CHANNEL = f.readline().strip("\n");
     print(f'We have logged in as {client.user}')
     await tree.sync()
     pinger.start()
