@@ -234,6 +234,7 @@ async def list_schedule(
 
 @tasks.loop()
 async def pinger():
+    global CHANNEL
     channel = client.get_channel(CHANNEL)
     global schedule
     if(len(schedule) == 0):
@@ -257,7 +258,8 @@ async def pinger():
 @client.event
 async def on_ready():
     f = open("channel.txt", "r")
-    CHANNEL = f.readline().strip("\n");
+    global CHANNEL
+    CHANNEL = int(f.readline().strip("\n"))
     print(f'We have logged in as {client.user}')
     await tree.sync()
     pinger.start()
