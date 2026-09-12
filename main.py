@@ -166,50 +166,21 @@ async def add_to_schedule(
 
 @tree.command(
 name = "delete_scheduled_ping",
-description = "format: <Mo/Tu/We/Th/Fr/Sa/Su>, <Time of day AM/PM>, message(optional)"
+description = "format: event id"
 )
 @app_commands.describe(
-    day="day of the week",
-    time="time(default is pm)",
-    message="optional: only need for multiple same time events",
+    id="event id",
 )
 async def delete_from_schedule(
     interaction: discord.Interaction, 
-    day: str,
-    time: str,
-    message: str | None
+    id: str
 ) -> None:
     global schedule
 
-    #parse day
-    day = parse_day(day)
-    if (day == -1):
-        await interaction.response.send_message("invalid input day")
-        return
-    
-    #parse time
-    time = parse_time(time)
-    if (time[0] == -1):
-        await interaction.response.send_message("invalid input time")
-        return
-    
-    day_time = time_to_seconds(day, time[0], time[1], time[2])
-
-    #remove from schedule if its there
-
-    if(message != None):
-        curr_length = len(schedule) #before snapshot
-        schedule = {key:val for key, val in schedule.items() if val[1] != message}
-        if(len(schedule) is not curr_length):
-            await interaction.response.send_message("event removed")
-        else:
-            await interaction.response.send_message("event not found")    
-
+    if(schedule.pop(id, -1) == -1):
+        await interaction.response.send_message("event not found") 
     else:
-        if(schedule.pop(day_time, -1) == -1):
-            await interaction.response.send_message("event not found") 
-        else:
-            await interaction.response.send_message("event removed") 
+        await interaction.response.send_message("event removed") 
 
 #-------------------------------------------------------
 
@@ -227,7 +198,7 @@ async def list_schedule(
         day, hour, minute, second = seconds_to_time(key)
         time_string = str(hour) + ":" + str(minute)
         time_message = datetime.strptime(time_string, "%H:%M").strftime("%I:%M %p")
-        message += day + ", " + time_message + " " + val[1] + "\r\n"
+        message += key + ": " + day + ", " + time_message + " " + val[1] + "\r\n"
     await interaction.response.send_message(message)
     
 #-------------------------------------------------------
@@ -265,6 +236,6 @@ async def on_ready():
     pinger.start()
 
 f = open("token.txt", "r")
-token = f.readline().strip("\n");
+token = f.readline().strip("\n")
 client.run(token)
 f.close()
